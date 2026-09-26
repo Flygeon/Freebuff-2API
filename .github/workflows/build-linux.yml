@@ -1,0 +1,41 @@
+name: Build Linux Binary
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/build-linux.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cargo cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Package
+        run: |
+          cp target/release/freebuff2api freebuff2api-linux-amd64
+          tar czf freebuff2api-linux-amd64.tar.gz freebuff2api-linux-amd64
+
+      - name: Upload to Release (tag linux-ci)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: linux-ci
+          name: Linux CI Build
+          prerelease: true
+          files: |
+            freebuff2api-linux-amd64
+            freebuff2api-linux-amd64.tar.gz
